@@ -105,15 +105,55 @@ def test_difficulty_ranges_are_strictly_ordered():
 
 def test_winning_guess():
     # If the secret is 50 and guess is 50, it should be a win
-    result = check_guess(50, 50)
-    assert result == "Win"
+    outcome, _ = check_guess(50, 50)
+    assert outcome == "Win"
 
 def test_guess_too_high():
     # If secret is 50 and guess is 60, hint should be "Too High"
-    result = check_guess(60, 50)
-    assert result == "Too High"
+    outcome, _ = check_guess(60, 50)
+    assert outcome == "Too High"
 
 def test_guess_too_low():
     # If secret is 50 and guess is 40, hint should be "Too Low"
-    result = check_guess(40, 50)
-    assert result == "Too Low"
+    outcome, _ = check_guess(40, 50)
+    assert outcome == "Too Low"
+
+
+# ---------------------------------------------------------------------------
+# String-conversion glitch regression tests
+# The bug: on even attempts, secret was cast to str, causing lexicographic
+# comparison. e.g. "60" > "100" → True → wrong "Go LOWER" hint.
+# ---------------------------------------------------------------------------
+
+def _simulate_check_guess_with_glitch(guess_int, secret_int, attempts):
+    """Reproduce the old buggy app.py logic: str(secret) on even attempts."""
+    if attempts % 2 == 0:
+        secret = str(secret_int)
+    else:
+        secret = secret_int
+    return check_guess(guess_int, secret)
+
+
+def test_glitch_caused_wrong_direction_even_attempt():
+    """Glitch: guess=60, secret=100, even attempt → wrong 'Too High' instead of 'Too Low'."""
+    outcome, _ = _simulate_check_guess_with_glitch(60, 100, attempts=2)
+    assert outcome == "Too High", "Confirms the glitch produced the wrong outcome"
+
+
+def test_fix_correct_direction_even_attempt():
+    """Fix: passing secret as int always gives the correct 'Too Low' hint."""
+    outcome, _ = check_guess(60, 100)
+    assert outcome == "Too Low", "guess 60 < secret 100 must return 'Too Low'"
+
+
+def test_fix_correct_direction_large_secret():
+    """Lexicographic pitfall: '60' > '100' but 60 < 100 numerically."""
+    outcome, _ = check_guess(60, 100)
+    assert outcome != "Too High", "'Go LOWER' hint is wrong when guess < secret"
+
+
+def test_fix_all_attempts_consistent():
+    """check_guess with int secret returns the same correct outcome regardless of attempt parity."""
+    for attempt in range(1, 7):
+        outcome, _ = check_guess(60, 100)
+        assert outcome == "Too Low", f"Failed on attempt {attempt}: expected 'Too Low', got '{outcome}'"

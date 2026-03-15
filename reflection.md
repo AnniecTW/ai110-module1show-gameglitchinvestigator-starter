@@ -8,7 +8,7 @@ Answer each question in 3 to 5 sentences. Be specific and honest about what actu
 - List at least two concrete bugs you noticed at the start  
   (for example: "the hints were backwards").
 
---- First, the difficulty labels don’t make sense because the number range for the hard level is smaller than the range for the normal level. Second, when I click the "New Game" button, only the answer changes. The attempt count stays the same. Also, the attempt count should be zero at the beginning of the game.
+--- First, the difficulty labels don’t make sense because the number range for the hard level is smaller than the range for the normal level. Second, when I click the "New Game" button, only the answer changes. The attempt count stays the same. In addition, the latest guess only appeared in the history list on the next run, which is counterintuitive.
 
 ## 2. How did you use AI as a teammate?
 
@@ -16,7 +16,7 @@ Answer each question in 3 to 5 sentences. Be specific and honest about what actu
 - Give one example of an AI suggestion that was correct (including what the AI suggested and how you verified the result).
   One problem I solved was adjusting the difficulty labels so that the number range for hard difficulty is the largest among the three labels. To fix this, AI suggested changing hard's range from `1-50` to `1-200`, which made the difficulty distribution more reasonable. I verified the result by running three pytests added by Claude and by manually playing the game to confirm the behavior.
 - Give one example of an AI suggestion that was incorrect or misleading (including what the AI suggested and how you verified the result).
-  So far I have not encountered any AI suggestions that were incorrect or misleading for the problems I asked about.
+  One AI suggestion was adding `st.rerun()` after the submit logic to fix a bug where the guess history only updated on the next submission due to Streamlit’s top-to-bottom execution order. While this fixed the history display, it caused the “Go Higher / Go Lower” hint to disappear. I verified this by testing the game and observing that the page reran before `st.warning(message)` could be displayed. This showed the fix introduced a new issue that required storing the hint in `st.session_state`.
 
 ---
 
